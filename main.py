@@ -2,45 +2,43 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import cv2
 import os
-
 from preprocessing import preprocess_image
 from feature_extraction import extract_features, reduce_features
 from fir_utils import save_fir, load_fir, match_fingerprints
 
-# ---------------- GUI Functions ----------------
 
 def convert_to_fir():
-    """Convert a BMP fingerprint image to FIR file and save keypoints visualization."""
     file_path = filedialog.askopenfilename(filetypes=[("BMP files", "*.bmp")])
     if not file_path:
         return
 
-    # Step 1: Preprocessing
+    #Preprocessing
     img, gray, binary = preprocess_image(file_path)
 
-    # Step 2: Feature Extraction
+    #Feature Extraction
     keypoints, descriptors = extract_features(gray)
 
     if descriptors is None:
         messagebox.showerror("Error", "No features detected in the image.")
         return
 
-    # Step 3: Dimensionality Reduction (PCA)
+    #PCA
     reduced = reduce_features(descriptors)
     
     base_name = os.path.splitext(os.path.basename(file_path))[0]
 
-    # Define output folder
     output_dir = r"D:\Codes\FIR Convertor\output"
     keypoint_dir = r"D:\Codes\FIR Convertor\keypoints"
 
     os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(keypoint_dir, exist_ok=True)
 
-    # Step 4: Save FIR file with same name as input
+
+    #save fir file
     fir_path = os.path.join(output_dir, base_name + ".fir")
     save_fir(fir_path, reduced)
 
-    # Step 5: Save image with keypoints drawn (same name + _keypoints.png)
+    #save keypoint file
     kp_img = cv2.drawKeypoints(
         img, keypoints, None,
         flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS
@@ -57,7 +55,7 @@ def convert_to_fir():
 
 
 def match_two_fingerprints():
-    """Match two FIR files and show similarity score."""
+    #matching fir files
     file1 = filedialog.askopenfilename(title="Select First FIR", filetypes=[("FIR files", "*.fir")])
     file2 = filedialog.askopenfilename(title="Select Second FIR", filetypes=[("FIR files", "*.fir")])
 
@@ -72,10 +70,14 @@ def match_two_fingerprints():
         return
 
     matches, score = match_fingerprints(desc1, desc2)
+    if score>75:
+        messagebox.showinfo("Matches", "FIngerprint matches!!!")
+    else: 
+        messagebox.showinfo("Not Matches", "FIngerprint not matches!!!")
+
+
     messagebox.showinfo("Match Result", f"Fingerprint Match Score: {score}\nTotal Matches: {len(matches)}")
 
-
-# ---------------- Tkinter UI ----------------
 def main():
     root = tk.Tk()
     root.title("Fingerprint Feature Extraction System")
